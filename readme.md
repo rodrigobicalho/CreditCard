@@ -7,7 +7,7 @@ In order to improve my Machine Learning Skills, I decided to try various methods
 The citation for the official papper is as following:
 ```markdown
 Yeh, I. C., & Lien, C. H. (2009). The comparisons of data mining techniques for the predictive accuracy of probability of default of credit card clients. Expert Systems with Applications, 36(2), 2473-2480.
-'''
+```
 
 Welcome!
 
