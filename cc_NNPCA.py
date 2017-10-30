@@ -145,7 +145,6 @@ avgi = np.average(coli)
 stdi = np.std(coli)
 data["X1"] = (data["X1"] - avgi)/stdi
 
-
 # Polinomial Features
 k = 33
 for i in range(1,33):
@@ -190,6 +189,10 @@ Test_X = data_X_redu[24001:30001,:]
 cv_Y = cv_Y.values
 Train_Y = Train_Y.values
 Test_Y = Test_Y.values
+
+
+#Smote
+
 
 
 # Neural Nets
@@ -270,7 +273,7 @@ def relu_activation(Z):
      A  = tf.nn.relu(Z)
      return A
  
-def L_model_forward(X,parameters):
+def L_model_forward(X,parameters,keep_probs):
     
     A = X
     L = len(parameters)//2
@@ -278,6 +281,7 @@ def L_model_forward(X,parameters):
     # Relu activation function
     for l in range(1,L):
         A_prev = A
+        A_prev = tf.nn.dropout(A_prev,keep_probs)
         A = relu_activation(linear_forward(A_prev, parameters['W' + str(l)], parameters['b' + str(l)]))
         
     #last layer
@@ -308,32 +312,40 @@ cost - Tensor of the cost function
     # The function tf.nn.softmax_cross_entropy_with_logits require transpose
     logits = Z3
     labels = Y
-    print("dimensions of Z3= ",str(Z3.shape))
-    print("dimensions of Y= ",str(Y.shape))
+
     
     #cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits,labels=labels))
     cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits,labels=labels))
     
     return cost
 
-def model(Train_X,Train_Y,cv_X,cv_Y,Test_X,Test_Y,layer_dims,minibatch_size=32,alfa = 0.0001,lamb=0.01,num_epochs=1500,print_cost = True):
-    
+def model(Train_X,Train_Y,cv_X,cv_Y,Test_X,Test_Y,layer_dims,minibatch_size=32,alfa = 0.0001,lamb=0,keep_probs=1,num_epochs=1500,print_cost = True):
+    """
+    Train_X,Train_Y,cv_X,cv_Y,Test_X,Test_Y = Input your datasets
+    layer_dims: a Python array(list) containing the dimensions of each layer in the NN
+    minibatch_size: size of the minibatch. Select the number 2**X, with X=[5,10] for better performance
+    alfa = Learning rate. Select a small enough for your model not to diverge, and big enough for fast optimization
+    lamb = Regularization Lambda. Increase to avoid overfitting. Reduce to avoid bias
+    num_epochs = Number of iterations of the model
+    Print_cost = True if you want the costs to be printed as the model is learning
+    """
     tic = time.time()
     ops.reset_default_graph()
     (m,n) = Train_X.shape # m = training examples n= number of features
     costs = []
     yj = Train_Y.shape[1]
     global_step = tf.Variable(0,trainable=False) #decaying alpha
+    #keep_probs = tf.placeholder(tf.float32)
     
     X, Y = create_placeholders(n, yj)
     parameters = initialize_parameters(layer_dims)
-    AL =L_model_forward(X, parameters)
+    AL =L_model_forward(X, parameters,keep_probs)
     cost = compute_cost(AL, Y)
     regularizer = regularization(parameters,lamb)
     cost = tf.reduce_mean(regularizer)+cost
     #Decaying learning rate
     #decay_alfa = tf.train.exponential_decay(alfa,global_step,250,0.9,staircase=False)
-    decay_alfa = alfa
+    decay_alfa = tf.train.exponential_decay(alfa,global_step,250,0.9,staircase=False)
     #optimization
     optimizer = tf.train.AdamOptimizer(learning_rate = decay_alfa).minimize(cost,global_step=global_step)
     init = tf.global_variables_initializer()
@@ -394,5 +406,6 @@ def model(Train_X,Train_Y,cv_X,cv_Y,Test_X,Test_Y,layer_dims,minibatch_size=32,a
     
     # Testing the model
     
-layer_dims = [Train_X.shape[1],100,60,5,1]
-parameters, pred_train, pred_cv, pred_test, AL_train, AL_cv, AL_test = model(Train_X,Train_Y,cv_X,cv_Y,Test_X,Test_Y,layer_dims,minibatch_size=256,alfa = 0.0002,lamb=0.009,num_epochs=500,print_cost = True)
+layer_dims = [Train_X.shape[1],40,40,10,1]
+parameters, pred_train, pred_cv, pred_test, AL_train, AL_cv, AL_test = model(Train_X,Train_Y,cv_X,cv_Y,Test_X,Test_Y,layer_dims,minibatch_size=256,alfa = 0.00025,lamb=0,keep_probs=0.85,num_epochs=1200,print_cost = True)
+keep_probs=keep_probs
