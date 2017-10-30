@@ -156,11 +156,18 @@ Test_X = data.iloc[24001:30001,2:35]
 
 
 
-#Resampling Training Data
-sm = SMOTE(ratio = 'minority', k_neighbors = 5)
+#Resampling Training Data with oversampling minority class
+sm = SMOTE(ratio = 'minority', k_neighbors = 10)
 Train_X_res, Train_Y_res = sm.fit_sample(Train_X,Train_Y)
 
 print("Y=1(%): ",str(np.sum(Train_Y_res)/Train_X_res.shape[0]))
+
+#Resampling Training Data with undersampling majority class
+sm = SMOTE(ratio = 'majority')#, k_neighbors = 5)
+Train_X_res, Train_Y_res = sm.fit_sample(Train_X,Train_Y)
+
+print("Y=1(%): ",str(np.sum(Train_Y_res)/Train_X_res.shape[0]))
+
 
 #Changing names for old model to function properly
 Train_X_org = Train_X
@@ -178,7 +185,15 @@ Test_Y = Test_Y.values
 
 #Just implement the model
 
+from collections import Counter
+from sklearn.datasets import make_classification
+from imblearn.under_sampling import ClusterCentroids
 
+Train_X, Train_Y = make_classification(n_samples=18000, n_features=116,n_redundant=0, n_repeated=0, n_classes=2,n_clusters_per_class=1,class_sep=0.8)
+cc = ClusterCentroids()
+X_res, Y_res = cc.fit_sample(Train_X, Train_Y)
+print(sorted(Counter(Y_res).items()))   
 
-    
+Train_X = X_res
+Train_Y = Y_res
     
