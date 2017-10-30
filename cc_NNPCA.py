@@ -408,4 +408,3 @@ def model(Train_X,Train_Y,cv_X,cv_Y,Test_X,Test_Y,layer_dims,minibatch_size=32,a
     
 layer_dims = [Train_X.shape[1],40,40,10,1]
 parameters, pred_train, pred_cv, pred_test, AL_train, AL_cv, AL_test = model(Train_X,Train_Y,cv_X,cv_Y,Test_X,Test_Y,layer_dims,minibatch_size=256,alfa = 0.00025,lamb=0,keep_probs=0.85,num_epochs=1200,print_cost = True)
-keep_probs=keep_probs
